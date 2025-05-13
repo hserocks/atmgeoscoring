@@ -1,0 +1,14 @@
+services:
+  atmgeoscoring:
+    build: .
+    container_name: ags-service
+    # volumes:
+    #   - models:/code/models
+    ports:
+      - 8000:8000
+    expose:
+      - 8000
+    environment:
+      - YANDEX_API_KEY=a297fbca-efd1-4873-a666-1d87c6e240f9
+    volumes:
+      - ./models:/app/models

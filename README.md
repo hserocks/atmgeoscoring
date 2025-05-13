@@ -1,0 +1,5 @@
+# atmgeoscorint
+
+docker compose up
+
+
