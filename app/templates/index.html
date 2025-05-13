@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Карта Москвы</title>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script src="https://api-maps.yandex.ru/2.1/?apikey={{ yandex_api_key }}&lang=ru_RU" type="text/javascript"></script>
+    <style>
+        body, html {
+            margin: 0;
+            padding: 0;
+            height: 100%;
+            font-family: Arial, sans-serif;
+        }
+        .container {
+            display: flex;
+            flex-direction: column;
+            height: 100%;
+        }
+        #map {
+            width: 100%;
+            height: 80%;
+        }
+        .form-container {
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        button {
+            padding: 10px 20px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            cursor: pointer;
+            font-size: 16px;
+        }
+        #address {
+            width: 300px;
+            padding: 8px;
+            margin-right: 10px;
+        }
+        .selector {
+            font-family: Arial, sans-serif;
+            font-size: 16px;
+            border: 1px solid #ccc;
+            padding: 8px; /* Резервируем место под стрелку */
+            margin-right: 15px;
+            border-radius: 4px;
+            -webkit-appearance: none; /* Стиль для Safari */
+            -moz-appearance: none;    /* Стиль для Firefox */
+            appearance: none;         /* Стиль для прочих браузеров */
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div id="map"></div>
+        <div class="form-container">
+            <form id="coordinatesForm" action="/calculate" method="post">
+                <input type="hidden" id="latitude" name="latitude">
+                <input type="hidden" id="longitude" name="longitude">
+                <input type="text" id="address" name="address" placeholder="Адрес" readonly>
+                <select class="selector" name="model">
+                    <option value="catboost">catboost</option>
+                    <option value="xgboost">xgboost</option>
+                    <option value="linereg">linereg</option>
+                    <option value="ansamble">ansamble (catboost+xgboost)</option>
+                </select>
+                <select class="selector" name="atm_group">
+                    <option value="32.0" selected>Т-Банк</option>
+                    <option value="496.5">Россельхозбанк</option>
+                    <option value="1022.0">Газпромбанк</option>
+                    <option value="1942.0">Росбанк</option>
+                    <option value="3185.5">Альфа-Банк</option>
+                    <option value="5478.0">ВТБ</option>
+                    <option value="8083.0">Сбербанк</option>
+                </select>
+                <button type="submit" id="calculate">Рассчитать</button>
+            </form>
+        </div>
+    </div>
+
+    <script type="text/javascript">
+        // Инициализация карты после загрузки API
+        ymaps.ready(init);
+        
+        function init() {
+            // Создание карты
+            var myMap = new ymaps.Map("map", {
+                center: [55.76, 37.64], // Москва
+                zoom: 10
+            });
+            
+            // Добавление поведения - перетаскивание маркера
+            myMap.behaviors.enable('drag');
+            
+            // Создание метки
+            var myPlacemark = new ymaps.Placemark([55.76, 37.64], {}, {
+                draggable: true
+            });
+            
+            myMap.geoObjects.add(myPlacemark);
+            
+            // Обработчик клика по карте
+            myMap.events.add('click', function (e) {
+                var coords = e.get('coords');
+                myPlacemark.geometry.setCoordinates(coords);
+                updateForm(coords);
+            });
+            
+            // Обработчик перетаскивания метки
+            myPlacemark.events.add('dragend', function () {
+                var coords = myPlacemark.geometry.getCoordinates();
+                updateForm(coords);
+            });
+            
+            // Обновление формы с координатами
+            function updateForm(coords) {
+                document.getElementById('latitude').value = coords[0];
+                document.getElementById('longitude').value = coords[1];
+                
+                // Получение адреса по координатам
+                ymaps.geocode(coords).then(function (res) {
+                    var firstGeoObject = res.geoObjects.get(0);
+                    document.getElementById('address').value = firstGeoObject.getAddressLine();
+                });
+            }
+        }
+    </script>
+</body>
+</html>
